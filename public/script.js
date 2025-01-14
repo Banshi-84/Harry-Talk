@@ -2,10 +2,15 @@ const socket = io('https://harry-talk.onrender.com'); // デプロイ済みURL
 const localVideo = document.getElementById('localVideo');
 const remoteVideo = document.getElementById('remoteVideo');
 const startCallButton = document.getElementById('startCall');
+const toggleCameraButton = document.getElementById('toggleCamera');
+const toggleMicButton = document.getElementById('toggleMic');
 
 let localStream;
 let peerConnection;
 const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+
+let isCameraEnabled = true;
+let isMicEnabled = true;
 
 // Get media stream from the user's camera and microphone
 navigator.mediaDevices.getUserMedia({ video: true, audio: true })
@@ -54,6 +59,22 @@ startCallButton.addEventListener('click', () => {
         .catch((error) => {
             console.error('Error creating offer:', error); // オファー作成エラー
         });
+});
+
+// Toggle Camera
+toggleCameraButton.addEventListener('click', () => {
+    isCameraEnabled = !isCameraEnabled;
+    localStream.getVideoTracks()[0].enabled = isCameraEnabled;
+    toggleCameraButton.textContent = isCameraEnabled ? 'Turn Off Camera' : 'Turn On Camera';
+    console.log('Camera state:', isCameraEnabled);
+});
+
+// Toggle Microphone
+toggleMicButton.addEventListener('click', () => {
+    isMicEnabled = !isMicEnabled;
+    localStream.getAudioTracks()[0].enabled = isMicEnabled;
+    toggleMicButton.textContent = isMicEnabled ? 'Mute Mic' : 'Unmute Mic';
+    console.log('Mic state:', isMicEnabled);
 });
 
 // Handle signaling messages
