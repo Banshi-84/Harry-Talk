@@ -12,15 +12,16 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // WebSocket communication for signaling
 io.on('connection', (socket) => {
-    console.log('A user connected');
+    console.log('A user connected'); // ログ: クライアントが接続した
 
     // Forward messages to other users
     socket.on('message', (message) => {
-        socket.broadcast.emit('message', message); // Send to all other users
+        console.log('Relaying message:', message); // ログ: メッセージ受信と転送
+        socket.broadcast.emit('message', message); // 他のクライアントに転送
     });
 
     socket.on('disconnect', () => {
-        console.log('A user disconnected');
+        console.log('A user disconnected'); // ログ: クライアントが切断
     });
 });
 

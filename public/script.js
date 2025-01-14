@@ -1,14 +1,10 @@
-const socket = io(); // Connect to the signaling server
+const socket = io('https://harry-talk.onrender.com'); // デプロイ済みURL
 const localVideo = document.getElementById('localVideo');
 const remoteVideo = document.getElementById('remoteVideo');
 const startCallButton = document.getElementById('startCall');
-const toggleCameraButton = document.getElementById('toggleCamera');
-const toggleMicButton = document.getElementById('toggleMic');
 
 let localStream;
 let peerConnection;
-let isCameraEnabled = true;
-let isMicEnabled = true;
 const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
 // Get media stream from the user's camera and microphone
@@ -19,7 +15,7 @@ navigator.mediaDevices.getUserMedia({ video: true, audio: true })
         localVideo.srcObject = stream;
     })
     .catch((error) => {
-        console.error('Error accessing media devices:', error);
+        console.error('Error accessing media devices:', error); // デバイス取得エラー
     });
 
 // Start the video call
@@ -48,22 +44,24 @@ startCallButton.addEventListener('click', () => {
     // Create and send an offer
     peerConnection.createOffer()
         .then((offer) => {
+            console.log('Creating offer:', offer); // オファー作成ログ
             return peerConnection.setLocalDescription(offer);
         })
         .then(() => {
-            console.log('Sending offer:', peerConnection.localDescription); // Offer送信ログ
+            console.log('Sending offer to server:', peerConnection.localDescription); // オファー送信ログ
             socket.emit('message', { type: 'offer', offer: peerConnection.localDescription });
         })
         .catch((error) => {
-            console.error('Error creating offer:', error);
+            console.error('Error creating offer:', error); // オファー作成エラー
         });
 });
 
 // Handle signaling messages
 socket.on('message', (message) => {
-    console.log('Received message:', message); // メッセージ受信ログ
+    console.log('Received message:', message); // シグナリングメッセージの受信ログ
+
     if (message.type === 'offer') {
-        console.log('Received offer:', message.offer); // Offer受信ログ
+        console.log('Received offer:', message.offer); // オファー受信ログ
         peerConnection = new RTCPeerConnection(config);
 
         localStream.getTracks().forEach((track) => {
@@ -71,7 +69,7 @@ socket.on('message', (message) => {
         });
 
         peerConnection.ontrack = (event) => {
-            console.log('Received remote stream:', event.streams[0]); // リモートストリームのログ
+            console.log('Received remote stream:', event.streams[0]); // リモートストリーム受信ログ
             remoteVideo.srcObject = event.streams[0];
         };
 
@@ -87,20 +85,20 @@ socket.on('message', (message) => {
                 return peerConnection.createAnswer();
             })
             .then((answer) => {
+                console.log('Sending answer to server:', answer); // アンサー送信ログ
                 return peerConnection.setLocalDescription(answer);
             })
             .then(() => {
-                console.log('Sending answer:', peerConnection.localDescription); // Answer送信ログ
                 socket.emit('message', { type: 'answer', answer: peerConnection.localDescription });
             })
             .catch((error) => {
-                console.error('Error handling offer:', error);
+                console.error('Error handling offer:', error); // オファー処理エラー
             });
     } else if (message.type === 'answer') {
-        console.log('Received answer:', message.answer); // Answer受信ログ
+        console.log('Received answer:', message.answer); // アンサー受信ログ
         peerConnection.setRemoteDescription(new RTCSessionDescription(message.answer));
     } else if (message.type === 'candidate') {
-        console.log('Received ICE candidate:', message.candidate); // Candidate受信ログ
+        console.log('Received ICE candidate:', message.candidate); // ICE候補受信ログ
         peerConnection.addIceCandidate(new RTCIceCandidate(message.candidate))
             .catch((error) => console.error('Error adding received ICE candidate:', error));
     }
