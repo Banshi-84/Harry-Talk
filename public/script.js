@@ -7,13 +7,14 @@ const toggleMicButton = document.getElementById('toggleMic');
 
 let localStream;
 let peerConnection;
-let isCameraEnabled = true; // Camera initial state
-let isMicEnabled = true; // Microphone initial state
-const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }; // STUN server configuration
+let isCameraEnabled = true;
+let isMicEnabled = true;
+const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
 // Get media stream from the user's camera and microphone
 navigator.mediaDevices.getUserMedia({ video: true, audio: true })
     .then((stream) => {
+        console.log('Local stream:', stream); // ローカルストリームのログ
         localStream = stream;
         localVideo.srcObject = stream;
     })
@@ -32,22 +33,25 @@ startCallButton.addEventListener('click', () => {
 
     // Handle remote stream tracks
     peerConnection.ontrack = (event) => {
+        console.log('Received remote stream:', event.streams[0]); // リモートストリームのログ
         remoteVideo.srcObject = event.streams[0];
     };
 
     // Handle ICE candidates
     peerConnection.onicecandidate = (event) => {
         if (event.candidate) {
+            console.log('Sending ICE candidate:', event.candidate); // ICE候補送信ログ
             socket.emit('message', { type: 'candidate', candidate: event.candidate });
         }
     };
 
-    // Create and send an offer to the other peer
+    // Create and send an offer
     peerConnection.createOffer()
         .then((offer) => {
             return peerConnection.setLocalDescription(offer);
         })
         .then(() => {
+            console.log('Sending offer:', peerConnection.localDescription); // Offer送信ログ
             socket.emit('message', { type: 'offer', offer: peerConnection.localDescription });
         })
         .catch((error) => {
@@ -55,34 +59,11 @@ startCallButton.addEventListener('click', () => {
         });
 });
 
-// Toggle camera
-toggleCameraButton.addEventListener('click', () => {
-    if (localStream) {
-        const videoTrack = localStream.getVideoTracks()[0];
-        if (videoTrack) {
-            isCameraEnabled = !isCameraEnabled;
-            videoTrack.enabled = isCameraEnabled; // Enable or disable the camera
-            toggleCameraButton.textContent = isCameraEnabled ? 'Turn Off Camera' : 'Turn On Camera';
-        }
-    }
-});
-
-// Toggle microphone
-toggleMicButton.addEventListener('click', () => {
-    if (localStream) {
-        const audioTrack = localStream.getAudioTracks()[0];
-        if (audioTrack) {
-            isMicEnabled = !isMicEnabled;
-            audioTrack.enabled = isMicEnabled; // Enable or disable the microphone
-            toggleMicButton.textContent = isMicEnabled ? 'Turn Off Mic' : 'Turn On Mic';
-        }
-    }
-});
-
 // Handle signaling messages
 socket.on('message', (message) => {
+    console.log('Received message:', message); // メッセージ受信ログ
     if (message.type === 'offer') {
-        // Handle received offer
+        console.log('Received offer:', message.offer); // Offer受信ログ
         peerConnection = new RTCPeerConnection(config);
 
         localStream.getTracks().forEach((track) => {
@@ -90,11 +71,13 @@ socket.on('message', (message) => {
         });
 
         peerConnection.ontrack = (event) => {
+            console.log('Received remote stream:', event.streams[0]); // リモートストリームのログ
             remoteVideo.srcObject = event.streams[0];
         };
 
         peerConnection.onicecandidate = (event) => {
             if (event.candidate) {
+                console.log('Sending ICE candidate:', event.candidate); // ICE候補送信ログ
                 socket.emit('message', { type: 'candidate', candidate: event.candidate });
             }
         };
@@ -107,16 +90,18 @@ socket.on('message', (message) => {
                 return peerConnection.setLocalDescription(answer);
             })
             .then(() => {
+                console.log('Sending answer:', peerConnection.localDescription); // Answer送信ログ
                 socket.emit('message', { type: 'answer', answer: peerConnection.localDescription });
             })
             .catch((error) => {
                 console.error('Error handling offer:', error);
             });
     } else if (message.type === 'answer') {
-        // Handle received answer
+        console.log('Received answer:', message.answer); // Answer受信ログ
         peerConnection.setRemoteDescription(new RTCSessionDescription(message.answer));
     } else if (message.type === 'candidate') {
-        // Add received ICE candidate
-        peerConnection.addIceCandidate(new RTCIceCandidate(message.candidate));
+        console.log('Received ICE candidate:', message.candidate); // Candidate受信ログ
+        peerConnection.addIceCandidate(new RTCIceCandidate(message.candidate))
+            .catch((error) => console.error('Error adding received ICE candidate:', error));
     }
 });
