@@ -16,7 +16,14 @@ let isCameraEnabled = true;
 let isMicEnabled = true;
 
 // Get media stream from the user's camera and microphone
-navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+navigator.mediaDevices.getUserMedia({ 
+    video: {
+        width: { ideal: 640 },
+        height: {ideal: 480}
+    },
+    audio: true 
+
+})
     .then((stream) => {
         console.log('Local stream:', stream); // ローカルストリームのログ
         localStream = stream;
