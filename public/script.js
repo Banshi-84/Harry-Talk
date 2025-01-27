@@ -4,6 +4,9 @@ const remoteVideo = document.getElementById('remoteVideo');
 const startCallButton = document.getElementById('startCall');
 const toggleCameraButton = document.getElementById('toggleCamera');
 const toggleMicButton = document.getElementById('toggleMic');
+const chatInput = document.getElementById('chat-input');
+const sendMessageButton = document.getElementById('send-message');
+const messagesContainer = document.getElementById('messages');
 
 let localStream;
 let peerConnection;
@@ -76,6 +79,29 @@ toggleMicButton.addEventListener('click', () => {
     toggleMicButton.textContent = isMicEnabled ? 'Mute Mic' : 'Unmute Mic';
     console.log('Mic state:', isMicEnabled);
 });
+
+// Chat message sending
+sendMessageButton.addEventListener('click', () => {
+    const message = chatInput.value.trim();
+    if (message) {
+        addMessage(`You: ${message}`);
+        socket.emit('chat', message); // Send message to the server
+        chatInput.value = '';
+    }
+});
+
+// Display received chat messages
+socket.on('chat', (message) => {
+    addMessage(`Friend: ${message}`);
+});
+
+// Add message to chat UI
+function addMessage(message) {
+    const messageElement = document.createElement('div');
+    messageElement.textContent = message;
+    messagesContainer.appendChild(messageElement);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight; // Scroll to bottom
+}
 
 // Handle signaling messages
 socket.on('message', (message) => {

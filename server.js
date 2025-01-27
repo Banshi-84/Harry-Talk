@@ -16,12 +16,17 @@ io.on('connection', (socket) => {
 
     // Forward messages to other users
     socket.on('message', (message) => {
-        console.log('Relaying message:', message); // ログ: メッセージ受信と転送
-        socket.broadcast.emit('message', message); // 他のクライアントに転送
+        console.log('Relaying message:', message);
+        socket.broadcast.emit('message', message);
     });
 
+    socket.on('chat', (chatMessage) => {
+        console.log('Received chat message:', chatMessage);
+        socket.broadcast.emit('chat', chatMessage);
+    })
+
     socket.on('disconnect', () => {
-        console.log('A user disconnected'); // ログ: クライアントが切断
+        console.log('A user disconnected');
     });
 });
 

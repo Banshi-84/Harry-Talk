@@ -17,6 +17,19 @@
             margin: 10px;
             font-size: 16px;
         }
+        #chat-container {
+            margin-top: 20px;
+        }
+        #messages {
+            border: 1px solid black;
+            height: 200px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+            padding: 10px;
+        }
+        #chat-input {
+            width: calc(100% - 120px);
+        }
     </style>
 </head>
 <body>
@@ -26,6 +39,12 @@
     <button id="startCall">Start Call</button>
     <button id="toggleCamera">Toggle Camera</button>
     <button id="toggleMic">Toggle Mic</button>
+
+    <div id="chat-container">
+        <div id="messages"></div>
+        <input id="chat-input" type="text" placeholder="Type your message here">
+        <button id="send-message">Send</button>
+    </div>
     <script src="/socket.io/socket.io.js"></script>
     <script src="script.js"></script>
 </body>
